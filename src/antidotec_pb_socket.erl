@@ -257,7 +257,7 @@ general_tx(Operations, Clock, Pid) ->
 %% Encode Atomic store crdts request into the
 %% pb request message structure to be serialized
 encode_general_txn(Operations) ->
-    OpList = lists:map(fun(Op) -> encode_general_txn_op(Op) end, Operations).
+    lists:map(fun(Op) -> encode_general_txn_op(Op) end, Operations).
     
 encode_general_txn_op({update, Key, Op, Param}) ->
     #fpbupdatereq{key=Key, operation=Op, parameter=Param};
