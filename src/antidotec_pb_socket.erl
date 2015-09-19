@@ -242,9 +242,9 @@ general_tx(Operations,Pid) ->
 general_tx(Operations, Clock, Pid) ->
     TxnRequest =  case Clock of 
                       ignore ->
-                          #fpbgeneraltxnreq{clock=term_to_binary(ignore),ops=encode_general_txn(Operations)};
+                          #fpbtxnreq{clock=term_to_binary(ignore),ops=encode_general_txn(Operations)};
                       _ ->
-                          #fpbgeneraltxnreq{clock=Clock,ops=encode_general_txn(Operations)}
+                          #fpbtxnreq{clock=Clock,ops=encode_general_txn(Operations)}
                   end,
     Result = call_infinity(Pid, {req, TxnRequest, ?TIMEOUT}),
     case Result of
@@ -260,12 +260,12 @@ encode_general_txn(Operations) ->
     lists:map(fun(Op) -> encode_general_txn_op(Op) end, Operations).
     
 encode_general_txn_op({update, Key, Op, Param}) ->
-    #fpbgeneraltxnop{op1=#fpbupdatereq{key=Key, operation=Op, parameter=Param}};
+    #fpbtxnop{type=0, key=Key, operation=get_op_id(Op), parameter=Param};
 encode_general_txn_op({read, Key}) ->
-    #fpbgeneraltxnop{op2=#fpbreadreq{key=Key}}.
+    #fpbtxnop{type=1, key=Key}.
 
 %% Decode response of pb request
-decode_response(#fpbgeneraltxnresp{success = Success, clock=Clock, results=Result}) ->
+decode_response(#fpbtxnresp{success = Success, clock=Clock, results=Result}) ->
     case Success of
         true ->
             Res = lists:map(fun(X) -> decode_response(X) end, Result),
@@ -273,8 +273,20 @@ decode_response(#fpbgeneraltxnresp{success = Success, clock=Clock, results=Resul
         _ ->
             {error, request_failed}
     end;
-decode_response(#fpbgeneraltxnrespvalue{value=Value}) ->
+decode_response(#fpbvalue{value=Value}) ->
     binary_to_term(Value);
 decode_response(Resp) ->
     lager:error("Unexpected Message ~p",[Resp]),
     error.
+
+get_op_id(increment) ->
+    0;
+get_op_id(decrement) ->
+    1;
+get_op_id(assign) ->
+    2;
+get_op_id(add) ->
+    3;
+get_op_id(remove) ->
+    4.
+
