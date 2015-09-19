@@ -260,7 +260,7 @@ encode_general_txn(Operations) ->
     lists:map(fun(Op) -> encode_general_txn_op(Op) end, Operations).
     
 encode_general_txn_op({update, Key, Op, Param}) ->
-    #fpbtxnop{type=0, key=Key, operation=get_op_id(Op), parameter=Param};
+    #fpbtxnop{type=0, key=Key, operation=get_op_id(Op), parameter=term_to_binary(Param)};
 encode_general_txn_op({read, Key}) ->
     #fpbtxnop{type=1, key=Key}.
 
