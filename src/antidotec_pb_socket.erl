@@ -260,9 +260,9 @@ encode_general_txn(Operations) ->
     lists:map(fun(Op) -> encode_general_txn_op(Op) end, Operations).
     
 encode_general_txn_op({update, Key, Op, Param}) ->
-    #fpbupdatereq{key=Key, operation=Op, parameter=Param};
+    #fpbgeneraltxnop{op1=#fpbupdatereq{key=Key, operation=Op, parameter=Param}};
 encode_general_txn_op({read, Key}) ->
-    #fpbreadreq{key=Key}.
+    #fpbgeneraltxnop{op2=#fpbreadreq{key=Key}}.
 
 %% Decode response of pb request
 decode_response(#fpbgeneraltxnresp{success = Success, clock=Clock, results=Result}) ->
