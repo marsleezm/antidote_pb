@@ -58,7 +58,7 @@
 -export([
          general_tx/2,
          general_tx/3,
-         prepare/3
+         prepare/4
         ]).
 
 %% @private
@@ -255,8 +255,8 @@ general_tx(Operations, Clock, Pid) ->
         Other -> {error, Other}
     end.
 
-prepare(SnapshotTime, Pid, Updates) ->
-    TxnReq = encode_prep_req(SnapshotTime, Pid, Updates),
+prepare(SnapshotTime, Serverid, Updates, Pid) ->
+    TxnReq = encode_prep_req(SnapshotTime, Serverid, Updates),
     Result = call_infinity(Pid, {req, TxnReq, ?TIMEOUT}),
     case Result of
         {ok, CommitTime} -> {ok, CommitTime};
