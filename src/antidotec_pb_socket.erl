@@ -289,8 +289,10 @@ decode_response(#fpbtxnresp{success = Success, clock=Clock, results=Result}) ->
     end;
 decode_response(#fpbvalue{value=Value}) ->
     binary_to_term(Value);
-decode_response(#fpbpreptxnresp{success=Success, commit_time=CommitTime}) ->
-    {Success, CommitTime};
+decode_response(#fpbpreptxnresp{success=true, commit_time=CommitTime}) ->
+    CommitTime;
+decode_response(#fpbpreptxnresp{success=false}) ->
+    {error, commit_fail};
 decode_response(Resp) ->
     lager:error("Unexpected Message ~p",[Resp]),
     error.
