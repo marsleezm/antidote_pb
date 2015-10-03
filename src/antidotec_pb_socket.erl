@@ -270,7 +270,7 @@ encode_general_txn(Operations) ->
 
 encode_prep_req(SnapshotTime, Pid, Updates) ->
     TxId = #fpbtxid{snapshot=SnapshotTime, pid=term_to_binary(Pid)},
-    Operations = lists:map(fun({Key, Value}) -> #fpbupdate{key=Key, value=Value} end, Updates),
+    Operations = lists:map(fun({Key, Value}) -> #fpbupdate{key=Key, value=term_to_binary(Value)} end, Updates),
     #fpbpreptxnreq{txid=TxId, ops=Operations}.
     
 encode_general_txn_op({update, Key, Op, Param}) ->
