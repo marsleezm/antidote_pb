@@ -57,8 +57,7 @@
 
 -export([
          general_tx/2,
-         general_tx/3,
-         prepare/4
+         general_tx/3
         ]).
 
 %% @private
@@ -255,24 +254,11 @@ general_tx(Operations, Clock, Pid) ->
         Other -> {error, Other}
     end.
 
-prepare(SnapshotTime, Serverid, Updates, Pid) ->
-    TxnReq = encode_prep_req(SnapshotTime, Serverid, Updates),
-    Result = call_infinity(Pid, {req, TxnReq, ?TIMEOUT}),
-    case Result of
-        {ok, CommitTime} -> {ok, CommitTime};
-        {error, Reason} -> {error, Reason}
-    end.
-
 %% Encode Atomic store crdts request into the
 %% pb request message structure to be serialized
 encode_general_txn(Operations) ->
     lists:map(fun(Op) -> encode_general_txn_op(Op) end, Operations).
 
-encode_prep_req(SnapshotTime, Pid, Updates) ->
-    TxId = #fpbtxid{snapshot=SnapshotTime, pid=term_to_binary(Pid)},
-    Operations = lists:map(fun({Key, Value}) -> #fpbupdate{key=Key, value=term_to_binary(Value)} end, Updates),
-    #fpbpreptxnreq{txid=TxId, ops=Operations}.
-    
 encode_general_txn_op({update, Key, Op, Param}) ->
     #fpbtxnop{type=0, key=Key, operation=get_op_id(Op), parameter=term_to_binary(Param)};
 encode_general_txn_op({read, Key}) ->
@@ -289,10 +275,6 @@ decode_response(#fpbtxnresp{success = Success, clock=Clock, results=Result}) ->
     end;
 decode_response(#fpbvalue{value=Value}) ->
     binary_to_term(Value);
-decode_response(#fpbpreptxnresp{success=true, commit_time=CommitTime}) ->
-    CommitTime;
-decode_response(#fpbpreptxnresp{success=false}) ->
-    {error, commit_fail};
 decode_response(Resp) ->
     lager:error("Unexpected Message ~p",[Resp]),
     error.
