@@ -261,7 +261,7 @@ read(TxId, Key, PartitionId, Pid) ->
     Req = #fpbreadreq{key=list_to_binary(Key), txid=TxId, partition_id=PartitionId},
     Result = call_infinity(Pid, {req, Req, ?TIMEOUT}),
     case Result of
-        {ok, CommitTime} -> {ok, CommitTime};
+        {ok, Value} -> {ok, Value};
         error -> error;
         {error, Reason} -> {error, Reason};
         Other -> {error, Other}
@@ -314,7 +314,7 @@ decode_response(#fpbpreptxnresp{success = Success, commit_time=CommitTime}) ->
             {error, request_failed}
     end;
 decode_response(#fpbvalue{value=Value}) ->
-    binary_to_term(Value);
+    {ok, binary_to_term(Value)};
 decode_response(#fpbtxid{}=TxId) ->
     {ok, TxId};
 decode_response(Resp) ->
