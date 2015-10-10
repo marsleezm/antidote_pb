@@ -51,6 +51,7 @@
          handle_call/3,
          handle_info/2,
          handle_cast/2,
+         single_up_req/4,
          init/1,
          code_change/3,
          terminate/2]).
@@ -234,6 +235,16 @@ cancel_req_timer(Tref) ->
     _ = erlang:cancel_timer(Tref),
     ok.
 
+single_up_req(Key, Value, PartitionId, Pid) ->
+    Req = #fpbsingleupreq{key=list_to_binary(Key), value=term_to_binary(Value), partition_id=PartitionId},
+    Result = call_infinity(Pid, {req, Req, ?TIMEOUT}),
+    case Result of
+        {ok, CommitTime} -> {ok, CommitTime};
+        error -> error;
+        {error, Reason} -> {error, Reason};
+        Other -> {error, Other}
+    end.
+
 %% Atomically stores multiple CRDTs converting the object state to a
 %% list of operations that will be appended to the log.
 general_tx(Operations,Pid) ->
@@ -270,6 +281,13 @@ decode_response(#fpbtxnresp{success = Success, clock=Clock, results=Result}) ->
         true ->
             Res = lists:map(fun(X) -> decode_response(X) end, Result),
             {Clock, Res};
+        _ ->
+            {error, request_failed}
+    end;
+decode_response(#fpbpreptxnresp{success = Success, commit_time=CommitTime}) ->
+    case Success of
+        true ->
+            {ok, CommitTime};
         _ ->
             {error, request_failed}
     end;
