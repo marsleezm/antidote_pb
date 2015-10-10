@@ -51,14 +51,16 @@
          handle_call/3,
          handle_info/2,
          handle_cast/2,
-         single_up_req/4,
          init/1,
          code_change/3,
          terminate/2]).
 
 -export([
          general_tx/2,
-         general_tx/3
+         general_tx/3,
+         start_tx/2,
+         single_up_req/4,
+         read/4
         ]).
 
 %% @private
@@ -245,6 +247,26 @@ single_up_req(Key, Value, PartitionId, Pid) ->
         Other -> {error, Other}
     end.
 
+start_tx(Clock, Pid) ->
+    Req = #fpbstarttxnreq{clock=Clock},
+    Result = call_infinity(Pid, {req, Req, ?TIMEOUT}),
+    case Result of
+        {ok, TxId} -> {ok, TxId};
+        error -> error;
+        {error, Reason} -> {error, Reason};
+        Other -> {error, Other}
+    end.
+
+read(TxId, Key, PartitionId, Pid) ->
+    Req = #fpbreadreq{key=list_to_binary(Key), txid=TxId, partition_id=PartitionId},
+    Result = call_infinity(Pid, {req, Req, ?TIMEOUT}),
+    case Result of
+        {ok, CommitTime} -> {ok, CommitTime};
+        error -> error;
+        {error, Reason} -> {error, Reason};
+        Other -> {error, Other}
+    end.
+
 %% Atomically stores multiple CRDTs converting the object state to a
 %% list of operations that will be appended to the log.
 general_tx(Operations,Pid) ->
@@ -293,6 +315,8 @@ decode_response(#fpbpreptxnresp{success = Success, commit_time=CommitTime}) ->
     end;
 decode_response(#fpbvalue{value=Value}) ->
     binary_to_term(Value);
+decode_response(#fpbtxid{}=TxId) ->
+    {ok, TxId};
 decode_response(Resp) ->
     lager:error("Unexpected Message ~p",[Resp]),
     error.
