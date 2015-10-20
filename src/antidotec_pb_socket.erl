@@ -313,7 +313,7 @@ decode_response(#fpbpreptxnresp{success = Success, commit_time=CommitTime}) ->
         _ ->
             {error, request_failed}
     end;
-decode_response(#fpbvalue{value=Value}) ->
+decode_response(#fpbvalue{str_value=Value}) ->
     {ok, binary_to_term(Value)};
 decode_response(#fpbtxid{}=TxId) ->
     {ok, TxId};
