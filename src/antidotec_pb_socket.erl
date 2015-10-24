@@ -58,6 +58,8 @@
 -export([
          general_tx/2,
          general_tx/3,
+         certify/5,
+         get_hash_fun/1,
          start_tx/2,
          single_up_req/4,
          read/4
@@ -257,6 +259,27 @@ start_tx(Clock, Pid) ->
         Other -> {error, Other}
     end.
 
+get_hash_fun(Pid) ->
+    Req = #fpbpartlistreq{noop=true},
+    Result = call_infinity(Pid, {req, Req, ?TIMEOUT}),
+    case Result of
+        {ok, Value} -> {ok, Value};
+        error -> error;
+        {error, Reason} -> {error, Reason};
+        Other -> {error, Other}
+    end.
+
+certify(Pid, TxId, LocalUpdates, RemoteUpdates, MyId) -> 
+    Req = #fpbpreptxnreq{txid=TxId, local_updates=encode_nodeups(LocalUpdates), 
+            remote_updates=encode_nodeups(RemoteUpdates), threadid=MyId},
+    Result = call_infinity(Pid, {req, Req, ?TIMEOUT}),
+    case Result of
+        {ok, Value} -> {ok, Value};
+        error -> error;
+        {error, Reason} -> {error, Reason};
+        Other -> {error, Other}
+    end.
+
 read(TxId, Key, PartitionId, Pid) ->
     Req = #fpbreadreq{key=list_to_binary(Key), txid=TxId, partition_id=PartitionId},
     Result = call_infinity(Pid, {req, Req, ?TIMEOUT}),
@@ -297,6 +320,13 @@ encode_general_txn_op({update, Key, Op, Param}) ->
 encode_general_txn_op({read, Key}) ->
     #fpbtxnop{type=1, key=Key}.
 
+encode_nodeups(Updates) ->
+    FoldUps = fun({Key, Value}, Acc) -> [#fpbupdate{key=integer_to_list(Key), 
+                value=#fpbvalue{field=12, str_value=Value}}|Acc] end,
+    #fpbnodeups{per_nodeup=lists:foreach(fun({Node, Part, Ups}) ->  
+                #fpbpernodeup{node=atom_to_list(Node), partition_id=Part, 
+                    ups=lists:foldl(FoldUps, [], Ups)} end, Updates)}.    
+
 %% Decode response of pb request
 decode_response(#fpbtxnresp{success = Success, clock=Clock, results=Result}) ->
     case Success of
@@ -313,6 +343,8 @@ decode_response(#fpbpreptxnresp{success = Success, commit_time=CommitTime}) ->
         _ ->
             {error, request_failed}
     end;
+decode_response(#fpbpartlist{node_parts=NodeParts}) ->
+    lists:foreach(fun(#fpbnodepart{ip=Ip, num_partitions=N}) -> {list_to_atom(Ip), N}  end ,  NodeParts); 
 decode_response(#fpbvalue{str_value=Value}) ->
     {ok, binary_to_term(Value)};
 decode_response(#fpbtxid{}=TxId) ->
