@@ -121,6 +121,7 @@ handle_info({_Proto, Sock, Data}, State=#state{active = (Active = #request{})}) 
                  error -> error;
                  {error,Reason} -> {error, Reason};
                  ok -> ok;
+                 {ok, Val} -> {ok, Val};
                  Val -> {ok, Val}
              end,
     cancel_req_timer(Active#request.tref),
