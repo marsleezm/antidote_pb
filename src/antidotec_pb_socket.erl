@@ -62,6 +62,7 @@
          get_hash_fun/1,
          start_tx/2,
          single_up_req/4,
+         single_read/4,
          read/4
         ]).
 
@@ -274,6 +275,17 @@ certify(Pid, {Time, ProcId}, LocalUpdates, RemoteUpdates, MyId) ->
     Req = #fpbpreptxnreq{txid=#fpbtxid{snapshot=Time, pid=term_to_binary(ProcId)}, 
             local_updates=encode_nodeups(LocalUpdates), 
             remote_updates=encode_nodeups(RemoteUpdates), threadid=MyId},
+    Result = call_infinity(Pid, {req, Req, ?TIMEOUT}),
+    case Result of
+        {ok, Value} -> {ok, Value};
+        error -> error;
+        {error, Reason} -> {error, Reason};
+        Other -> {error, Other}
+    end.
+
+single_read(Pid, {Time, ProcId}, Key, PartitionId) ->
+    Req = #fpbreadreq{key=integer_to_list(Key), txid=#fpbtxid{snapshot=Time, pid=term_to_binary(ProcId)},
+            partition_id=PartitionId},
     Result = call_infinity(Pid, {req, Req, ?TIMEOUT}),
     case Result of
         {ok, Value} -> {ok, Value};
