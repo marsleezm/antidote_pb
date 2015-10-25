@@ -324,7 +324,7 @@ encode_general_txn_op({read, Key}) ->
 encode_nodeups(Updates) ->
     FoldUps = fun({Key, Value}, Acc) -> [#fpbupdate{key=integer_to_list(Key), 
                 value=#fpbvalue{field=12, str_value=Value}}|Acc] end,
-    #fpbnodeups{per_nodeup=lists:foreach(fun({Node, Part, Ups}) ->  
+    #fpbnodeups{per_nodeup=lists:map(fun({Node, Part, Ups}) ->  
                 #fpbpernodeup{node=atom_to_list(Node), partition_id=Part, 
                     ups=lists:foldl(FoldUps, [], Ups)} end, Updates)}.    
 
@@ -345,7 +345,7 @@ decode_response(#fpbpreptxnresp{success = Success, commit_time=CommitTime}) ->
             {error, request_failed}
     end;
 decode_response(#fpbpartlist{node_parts=NodeParts}) ->
-    lists:foreach(fun(#fpbnodepart{ip=Ip, num_partitions=N}) -> {list_to_atom(Ip), N}  end ,  NodeParts); 
+    lists:map(fun(#fpbnodepart{ip=Ip, num_partitions=N}) -> {list_to_atom(Ip), N}  end ,  NodeParts); 
 decode_response(#fpbvalue{str_value=Value}) ->
     {ok, binary_to_term(Value)};
 decode_response(#fpbtxid{}=TxId) ->
