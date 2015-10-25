@@ -359,8 +359,10 @@ decode_response(#fpbpreptxnresp{success = Success, commit_time=CommitTime}) ->
     end;
 decode_response(#fpbpartlist{node_parts=NodeParts}) ->
     lists:map(fun(#fpbnodepart{ip=Ip, num_partitions=N}) -> {list_to_atom(Ip), N}  end ,  NodeParts); 
-decode_response(#fpbvalue{str_value=Value}) ->
-    {ok, binary_to_term(Value)};
+decode_response(#fpbvalue{field=12, str_value=Value}) ->
+    {ok, Value};
+decode_response(#fpbvalue{field=0}) ->
+    {ok, []};
 decode_response(#fpbtxid{}=TxId) ->
     {ok, TxId};
 decode_response(Resp) ->
