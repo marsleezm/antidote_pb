@@ -270,8 +270,9 @@ get_hash_fun(Pid) ->
         Other -> {error, Other}
     end.
 
-certify(Pid, TxId, LocalUpdates, RemoteUpdates, MyId) -> 
-    Req = #fpbpreptxnreq{txid=TxId, local_updates=encode_nodeups(LocalUpdates), 
+certify(Pid, {Time, ProcId}, LocalUpdates, RemoteUpdates, MyId) -> 
+    Req = #fpbpreptxnreq{txid=#fpbtxid{snapshot=Time, pid=term_to_binary(ProcId)}, 
+            local_updates=encode_nodeups(LocalUpdates), 
             remote_updates=encode_nodeups(RemoteUpdates), threadid=MyId},
     Result = call_infinity(Pid, {req, Req, ?TIMEOUT}),
     case Result of
