@@ -337,8 +337,8 @@ encode_general_txn_op({read, Key}) ->
 encode_nodeups(Updates) ->
     FoldUps = fun({Key, Value}, Acc) -> [#fpbupdate{key=integer_to_list(Key), 
                 value=#fpbvalue{field=12, str_value=Value}}|Acc] end,
-    #fpbnodeups{per_nodeup=lists:map(fun({Node, Part, Ups}) ->  
-                #fpbpernodeup{node=atom_to_list(Node), partition_id=Part, 
+    #fpbnodeups{per_nodeup=lists:map(fun({NodeId, Part, Ups}) ->  
+                #fpbpernodeup{node_id=NodeId, partition_id=Part, 
                     ups=lists:foldl(FoldUps, [], Ups)} end, Updates)}.    
 
 %% Decode response of pb request
