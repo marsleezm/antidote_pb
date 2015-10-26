@@ -59,6 +59,7 @@
          general_tx/2,
          general_tx/3,
          certify/5,
+         certify_withid/5,
          get_hash_fun/1,
          start_tx/2,
          single_up_req/4,
@@ -263,6 +264,18 @@ start_tx(Clock, Pid) ->
 
 get_hash_fun(Pid) ->
     Req = #fpbpartlistreq{noop=true},
+    Result = call_infinity(Pid, {req, Req, ?TIMEOUT}),
+    case Result of
+        {ok, Value} -> {ok, Value};
+        error -> error;
+        {error, Reason} -> {error, Reason};
+        Other -> {error, Other}
+    end.
+
+certify_withid(Pid, TxId, LocalUpdates, RemoteUpdates, MyId) -> 
+    Req = #fpbpreptxnreq{txid=TxId, 
+            local_updates=encode_nodeups(LocalUpdates), 
+            remote_updates=encode_nodeups(RemoteUpdates), threadid=MyId},
     Result = call_infinity(Pid, {req, Req, ?TIMEOUT}),
     case Result of
         {ok, Value} -> {ok, Value};
