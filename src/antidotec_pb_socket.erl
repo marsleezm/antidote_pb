@@ -243,7 +243,8 @@ cancel_req_timer(Tref) ->
     ok.
 
 single_up_req(Key, Value, PartitionId, Pid) ->
-    Req = #fpbsingleupreq{key=list_to_binary(Key), value=term_to_binary(Value), partition_id=PartitionId},
+    Req = #fpbsingleupreq{key=list_to_binary(Key), 
+            value=#fpbvalue{field=12, str_value=Value}, partition_id=PartitionId},
     Result = call_infinity(Pid, {req, Req, ?TIMEOUT}),
     case Result of
         {ok, CommitTime} -> {ok, CommitTime};
