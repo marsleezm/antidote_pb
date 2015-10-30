@@ -371,7 +371,7 @@ decode_response(#fpbpreptxnresp{success = Success, commit_time=CommitTime}) ->
         _ ->
             {error, request_failed}
     end;
-decode_response(#fpbpartlist{node_parts=NodeParts}) ->
+decode_response(#fpbpartlist{node_parts=NodeParts, repl_list=_ReplList}) ->
     lists:map(fun(#fpbnodepart{ip=Ip, num_partitions=N}) -> {list_to_atom(Ip), N}  end ,  NodeParts); 
 decode_response(#fpbvalue{field=12, str_value=Value}) ->
     {ok, Value};
