@@ -360,7 +360,7 @@ encode_general_txn_op({read, Key}) ->
     #fpbtxnop{type=1, key=Key}.
 
 encode_nodeups(Updates) ->
-    FoldUps = fun({Key, Value}, Acc) -> [#fpbupdate{key=integer_to_list(Key), 
+    FoldUps = fun({Key, Value}, Acc) -> [#fpbupdate{key=Key, 
                 value=#fpbvalue{field=12, str_value=Value}}|Acc] end,
     #fpbnodeups{per_nodeup=lists:map(fun({NodeId, Part, Ups}) ->  
                 #fpbpernodeup{node_id=NodeId, partition_id=Part, 
