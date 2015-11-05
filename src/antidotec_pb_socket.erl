@@ -369,18 +369,18 @@ encode_nodeups(Updates) ->
 %% Decode response of pb request
 decode_response(#fpbtxnresp{success = Success, clock=Clock, results=Result}) ->
     case Success of
-        true ->
+        false ->
+            {error, request_failed};
+        _ ->
             Res = lists:map(fun(X) -> decode_response(X) end, Result),
-            {Clock, Res};
-        _ ->
-            {error, request_failed}
+            {Clock, Res}
     end;
-decode_response(#fpbpreptxnresp{success = Success, commit_time=CommitTime}) ->
-    case Success of
-        true ->
-            {ok, CommitTime};
+decode_response(#fpbpreptxnresp{result = Result, commit_time=CommitTime}) ->
+    case Result of
+        0 ->
+            {error, request_failed};
         _ ->
-            {error, request_failed}
+            {ok, CommitTime}
     end;
 decode_response(#fpbpartlist{node_parts=NodeParts, repl_list=_ReplList}) ->
     lists:map(fun(#fpbnodepart{ip=Ip, num_partitions=N}) -> {list_to_atom(Ip), N}  end ,  NodeParts); 
