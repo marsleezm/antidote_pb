@@ -64,6 +64,7 @@
          start_tx/2,
          single_up_req/4,
          single_read/4,
+         cache_read/5,
          read/4
         ]).
 
@@ -300,6 +301,16 @@ certify(Pid, {Time, ProcId}, LocalUpdates, RemoteUpdates, MyId) ->
 single_read(Pid, {Time, ProcId}, Key, PartitionId) ->
     Req = #fpbreadreq{key=integer_to_list(Key), txid=#fpbtxid{snapshot=Time, pid=term_to_binary(ProcId)},
             partition_id=PartitionId},
+    Result = call_infinity(Pid, {req, Req, ?TIMEOUT}),
+    case Result of
+        {ok, Value} -> {ok, Value};
+        error -> error;
+        {error, Reason} -> {error, Reason};
+        Other -> {error, Other}
+    end.
+
+cache_read(TxId, Key, NodeId, PartitionId, Pid) ->
+    Req = #fpbreadreq{key=list_to_binary(Key), txid=TxId, node_id=NodeId, partition_id=PartitionId},
     Result = call_infinity(Pid, {req, Req, ?TIMEOUT}),
     case Result of
         {ok, Value} -> {ok, Value};
